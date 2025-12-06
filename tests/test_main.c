@@ -129,13 +129,16 @@ static void test_main_invalid_port(void) {
 static void test_main_missing_args(void) {
     reset_state();
     int rc = invoke_main("prog 8080");
-    assert(rc == EXIT_FAILURE);
+    assert(rc == EXIT_SUCCESS);
+    assert(run_server_calls == 1);
+    assert(strcmp(last_dir, ".") == 0);
 }
 
 static void test_main_parallel_flag(void) {
     reset_state();
     int rc = invoke_main("prog -p 4 9090 data");
     assert(rc == EXIT_SUCCESS);
+    assert(run_server_calls == 1);
     assert(parallel_init_calls == 1);
     assert(parallel_shutdown_calls == 1);
     assert(last_parallel_threads == 4);

@@ -16,12 +16,12 @@
 // Helpers
 //
 
-static void clean_tmpdir() {
+static void clean_tmpdir(void) {
     // Delete all files inside tests/tmp/
     system("rm -rf tests/tmp/*");
 }
 
-static void ensure_tmpdir() {
+static void ensure_tmpdir(void) {
     mkdir(TMPDIR, 0777);
 }
 
@@ -44,7 +44,7 @@ static char *read_fd(int fd) {
 // Test cases
 //
 
-void test_get_ok() {
+void test_get_ok(void) {
     ensure_tmpdir();
     clean_tmpdir();
 
@@ -59,7 +59,7 @@ void test_get_ok() {
 
     struct http_request req = {0};
     strcpy(req.method, "GET");
-    strcpy(req.uri, "exists");
+    strcpy(req.uri, "/exists");
 
     dispatch_request(&req, fds[1]);
 
@@ -73,7 +73,7 @@ void test_get_ok() {
 }
 
 
-void test_get_404() {
+void test_get_404(void) {
     ensure_tmpdir();
     clean_tmpdir();
 
@@ -82,7 +82,7 @@ void test_get_404() {
 
     struct http_request req = {0};
     strcpy(req.method, "GET");
-    strcpy(req.uri, "missing");
+    strcpy(req.uri, "/missing");
 
     dispatch_request(&req, fds[1]);
 
@@ -95,7 +95,7 @@ void test_get_404() {
 }
 
 
-void test_put_ok() {
+void test_put_ok(void) {
     ensure_tmpdir();
     clean_tmpdir();
 
@@ -104,7 +104,7 @@ void test_put_ok() {
 
     struct http_request req = {0};
     strcpy(req.method, "PUT");
-    strcpy(req.uri, "file");
+    strcpy(req.uri, "/file");
     req.body = (uint8_t *)"DATA";
     req.body_length = 4;
 
@@ -128,7 +128,7 @@ void test_put_ok() {
 }
 
 
-void test_put_403() {
+void test_put_403(void) {
     ensure_tmpdir();
     clean_tmpdir();
 
@@ -145,7 +145,7 @@ void test_put_403() {
 
     struct http_request req = {0};
     strcpy(req.method, "PUT");
-    strcpy(req.uri, "readonly");
+    strcpy(req.uri, "/readonly");
     req.body = (uint8_t *)"DATA";
     req.body_length = 4;
 
@@ -160,7 +160,8 @@ void test_put_403() {
 }
 
 
-int main() {
+int main(void) {
+    setenv("TEST_TMPDIR", TMPDIR, 1);
     test_get_ok();
     test_get_404();
     test_put_ok();

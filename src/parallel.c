@@ -29,14 +29,12 @@ typedef struct {
     int initialized;
 } thread_pool_t;
 
-static thread_pool_t pool = {
-    .threads = NULL,
+static thread_pool_t pool = { .threads = NULL,
     .num_threads = 0,
     .head = NULL,
     .tail = NULL,
     .shutting_down = 0,
-    .initialized = 0
-};
+    .initialized = 0 };
 
 static void enqueue_job(int client_fd) {
     job_t *job = malloc(sizeof(job_t));
@@ -76,7 +74,7 @@ static job_t *dequeue_job(void) {
 }
 
 static void *worker_main(void *arg) {
-    (void)arg;
+    (void) arg;
 
     for (;;) {
         pthread_mutex_lock(&pool.mutex);
@@ -198,7 +196,7 @@ void parallel_shutdown(void) {
 }
 
 int parallel_connection_handler(int client_fd, void *context) {
-    (void)context;
+    (void) context;
 
     if (!pool.initialized) {
         handle_connection(client_fd);

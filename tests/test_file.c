@@ -8,14 +8,33 @@
 
 #include "../src/file.h"
 
-// Create a temporary file path under /tmp
+static char tmp_root[256];
+
+// Create a temporary file path under TEST_TMPDIR
 static char *tmp_path(const char *name) {
     static char buf[256];
-    snprintf(buf, sizeof(buf), "/tmp/testfile_%s_%d", name, getpid());
+    snprintf(buf, sizeof(buf), "/%s_%d", name, getpid());
     return buf;
 }
 
-void test_stat_nonexistent() {
+static char *tmp_full_path(const char *uri) {
+    static char full[512];
+    const char *base = tmp_root[0] ? tmp_root : ".";
+    const char *u = (uri && uri[0] == '/') ? uri + 1 : uri;
+    snprintf(full, sizeof(full), "%s/%s", base, u ? u : "");
+    return full;
+}
+
+static void setup_tmpdir(void) {
+    mkdir("tests/tmp", 0777);
+    static char tmp_template[] = "tests/tmp/filetestsXXXXXX";
+    char *dir = mkdtemp(tmp_template);
+    assert(dir);
+    snprintf(tmp_root, sizeof(tmp_root), "%s", dir);
+    setenv("TEST_TMPDIR", tmp_root, 1);
+}
+
+void test_stat_nonexistent(void) {
     const char *path = tmp_path("nofile");
     file_status_t st;
     int rc = file_stat_status(path, &st);
@@ -24,7 +43,7 @@ void test_stat_nonexistent() {
     printf("test_stat_nonexistent: OK\n");
 }
 
-void test_write_new_file() {
+void test_write_new_file(void) {
     const char *path = tmp_path("new");
 
     uint8_t data[] = {1,2,3,4};
@@ -37,7 +56,7 @@ void test_write_new_file() {
     printf("test_write_new_file: OK\n");
 }
 
-void test_write_overwrite() {
+void test_write_overwrite(void) {
     const char *path = tmp_path("overwrite");
 
     uint8_t first[] = {9,9};
@@ -59,7 +78,7 @@ void test_write_overwrite() {
     printf("test_write_overwrite: OK\n");
 }
 
-void test_read_existing() {
+void test_read_existing(void) {
     const char *path = tmp_path("read");
     uint8_t written[] = {'A','B','C','D'};
 
@@ -78,7 +97,7 @@ void test_read_existing() {
     printf("test_read_existing: OK\n");
 }
 
-void test_read_nonexistent() {
+void test_read_nonexistent(void) {
     const char *path = tmp_path("doesnotexist");
 
     char *buf = NULL;
@@ -92,11 +111,11 @@ void test_read_nonexistent() {
     printf("test_read_nonexistent: OK\n");
 }
 
-void test_read_empty_file() {
+void test_read_empty_file(void) {
     const char *path = tmp_path("empty");
 
     // Create empty file
-    FILE *f = fopen(path, "w");
+    FILE *f = fopen(tmp_full_path(path), "w");
     fclose(f);
 
     char *buf = NULL;
@@ -110,7 +129,9 @@ void test_read_empty_file() {
     free(buf);
     printf("test_read_empty_file: OK\n");
 }
-int main() {
+
+int main(void) {
+    setup_tmpdir();
     test_stat_nonexistent();
     test_write_new_file();
     test_write_overwrite();

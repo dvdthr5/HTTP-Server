@@ -53,7 +53,7 @@ static char *read_all(int fd) {
 }
 
 // Capture a single log line written to stderr by handle_connection
-static char *capture_log_line(void (*fn)(int), int server_fd) {
+static char *capture_log_line(int (*fn)(int), int server_fd) {
     int log_fds[2];
     if (pipe(log_fds) < 0) {
         perror("pipe");
@@ -97,7 +97,7 @@ static char *capture_log_line(void (*fn)(int), int server_fd) {
 // Tests
 // -----------------------
 
-void test_connection_get_ok() {
+void test_connection_get_ok(void) {
     prepare_tmpdir();
     log_init();
 
@@ -115,7 +115,7 @@ void test_connection_get_ok() {
 
     // Send full HTTP GET request with Request-ID
     const char *req =
-        "GET exists HTTP/1.1\r\n"
+        "GET /exists HTTP/1.1\r\n"
         "Request-ID: 42\r\n"
         "\r\n";
 
@@ -135,13 +135,13 @@ void test_connection_get_ok() {
     assert(strstr(resp, "HELLO"));
 
     // Log checks: "GET,exists,200,42\n"
-    assert(strstr(log_line, "GET,exists,200,42"));
+    assert(strstr(log_line, "GET,/exists,200,42"));
 
     log_close();
     printf("test_connection_get_ok: OK\n");
 }
 
-void test_connection_invalid_method() {
+void test_connection_invalid_method(void) {
     prepare_tmpdir();
     log_init();
 
@@ -152,7 +152,7 @@ void test_connection_invalid_method() {
     int client_fd = fds[1];
 
     const char *req =
-        "POST foo HTTP/1.1\r\n"
+        "POST /foo HTTP/1.1\r\n"
         "\r\n";
 
     write(client_fd, req, strlen(req));
@@ -162,9 +162,9 @@ void test_connection_invalid_method() {
     char *resp = read_all(client_fd);
     close(client_fd);
 
-    // Response should be 501 Not Implemented with zero-length body
+    // Response should be 501 Not Implemented with a short error body
     assert(strstr(resp, "HTTP/1.1 501 Not Implemented"));
-    assert(strstr(resp, "Content-Length: 0"));
+    assert(strstr(resp, "Content-Length: 16"));
 
     // Log line should at least contain ",501,"
     assert(strstr(log_line, ",501,"));
@@ -173,7 +173,7 @@ void test_connection_invalid_method() {
     printf("test_connection_invalid_method: OK\n");
 }
 
-void test_connection_put_ok() {
+void test_connection_put_ok(void) {
     prepare_tmpdir();
     log_init();
 
@@ -184,7 +184,7 @@ void test_connection_put_ok() {
     int client_fd = fds[1];
 
     const char *req =
-        "PUT newfile HTTP/1.1\r\n"
+        "PUT /newfile HTTP/1.1\r\n"
         "Content-Length: 4\r\n"
         "Request-ID: 7\r\n"
         "\r\n"
@@ -199,7 +199,7 @@ void test_connection_put_ok() {
 
     // First PUT to a non-existent file → 201 Created
     assert(strstr(resp, "HTTP/1.1 201 Created"));
-    assert(strstr(resp, "Content-Length: 0"));
+    assert(strstr(resp, "Content-Length: 8"));
 
     // File contents
     FILE *f = fopen("tests/tmp/newfile", "rb");
@@ -210,13 +210,13 @@ void test_connection_put_ok() {
     assert(memcmp(buf, "DATA", 4) == 0);
 
     // Log line: "...200 or 201..." but dispatcher returns 201, so:
-    assert(strstr(log_line, "PUT,newfile,201,7"));
+    assert(strstr(log_line, "PUT,/newfile,201,7"));
 
     log_close();
     printf("test_connection_put_ok: OK\n");
 }
 
-int main() {
+int main(void) {
     test_connection_get_ok();
     test_connection_invalid_method();
     test_connection_put_ok();

@@ -1,57 +1,35 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -Werror -pedantic -std=c11 -Isrc
+CC ?= clang
+CFLAGS = -Wall -Wextra -Werror -pedantic -std=c11
 LDFLAGS = -pthread
 
 SRC_DIR = src
 OBJ_DIR = obj
-
-
 TARGET = httpserver
+
+# Detect whether we have a src/ subdirectory or not
+ifneq ($(wildcard $(SRC_DIR)),)
+    SRCDIR := $(SRC_DIR)
+    CFLAGS += -Isrc
+else
+    SRCDIR := .
+endif
+
+# All .c files in the chosen source directory
+SRCS := $(wildcard $(SRCDIR)/*.c)
+
+# Object files live in obj/, names derived from SRCDIR/*.c
+OBJS := $(patsubst $(SRCDIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
 all: $(TARGET)
 
-$(TARGET): \
-    $(OBJ_DIR)/main.o \
-    $(OBJ_DIR)/server.o \
-    $(OBJ_DIR)/connection.o \
-    $(OBJ_DIR)/http.o \
-    $(OBJ_DIR)/dispatcher.o \
-    $(OBJ_DIR)/file.o \
-    $(OBJ_DIR)/log.o \
-    $(OBJ_DIR)/parallel.o
-	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LDFLAGS)
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-$(OBJ_DIR)/main.o: $(SRC_DIR)/main.c
+$(OBJ_DIR):
 	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/main.c -o $(OBJ_DIR)/main.o
 
-$(OBJ_DIR)/server.o: $(SRC_DIR)/server.c $(SRC_DIR)/server.h
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/server.c -o $(OBJ_DIR)/server.o
-
-$(OBJ_DIR)/connection.o: $(SRC_DIR)/connection.c $(SRC_DIR)/connection.h
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/connection.c -o $(OBJ_DIR)/connection.o
-
-$(OBJ_DIR)/http.o: $(SRC_DIR)/http.c $(SRC_DIR)/http.h
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/http.c -o $(OBJ_DIR)/http.o
-
-$(OBJ_DIR)/dispatcher.o: $(SRC_DIR)/dispatcher.c $(SRC_DIR)/dispatcher.h
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/dispatcher.c -o $(OBJ_DIR)/dispatcher.o
-
-$(OBJ_DIR)/file.o: $(SRC_DIR)/file.c $(SRC_DIR)/file.h
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/file.c -o $(OBJ_DIR)/file.o
-
-$(OBJ_DIR)/log.o: $(SRC_DIR)/log.c $(SRC_DIR)/log.h
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/log.c -o $(OBJ_DIR)/log.o
-
-$(OBJ_DIR)/parallel.o: $(SRC_DIR)/parallel.c $(SRC_DIR)/parallel.h
-	mkdir -p $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/parallel.c -o $(OBJ_DIR)/parallel.o
+$(OBJ_DIR)/%.o: $(SRCDIR)/%.c | $(OBJ_DIR)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)

@@ -37,12 +37,8 @@ void log_request(const struct http_request *req, int status_code) {
     }
 
     pthread_mutex_lock(&log_mutex);
-    fprintf(stderr,
-            "%s,%s,%d,%d\n",
-            req->method[0] ? req->method : "-",
-            req->uri[0] ? req->uri : "-",
-            status_code,
-            req->request_id);
+    fprintf(stderr, "%s,%s,%d,%d\n", req->method[0] ? req->method : "-",
+        req->uri[0] ? req->uri : "-", status_code, req->request_id);
     fflush(stderr);
     pthread_mutex_unlock(&log_mutex);
 }

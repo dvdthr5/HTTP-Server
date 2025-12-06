@@ -16,9 +16,9 @@ static int make_pipe_with_input(const char *input) {
     return fds[0];
 }
 
-void test_valid_get() {
+void test_valid_get(void) {
     const char *req =
-        "GET foo.txt HTTP/1.1\r\n"
+        "GET /foo.txt HTTP/1.1\r\n"
         "\r\n";
 
     int fd = make_pipe_with_input(req);
@@ -27,7 +27,7 @@ void test_valid_get() {
     int st = parse_request(fd, &r);
     assert(st == 0);
     assert(strcmp(r.method, "GET") == 0);
-    assert(strcmp(r.uri, "foo.txt") == 0);
+    assert(strcmp(r.uri, "/foo.txt") == 0);
     assert(strcmp(r.version, "HTTP/1.1") == 0);
     assert(r.content_length == -1);
 
@@ -35,9 +35,9 @@ void test_valid_get() {
     printf("test_valid_get: OK\n");
 }
 
-void test_invalid_method() {
+void test_invalid_method(void) {
     const char *req =
-        "POST foo HTTP/1.1\r\n"
+        "POST /foo HTTP/1.1\r\n"
         "\r\n";
 
     int fd = make_pipe_with_input(req);
@@ -50,9 +50,9 @@ void test_invalid_method() {
     printf("test_invalid_method: OK\n");
 }
 
-void test_invalid_version() {
+void test_invalid_version(void) {
     const char *req =
-        "GET foo HTTP/2.0\r\n"
+        "GET /foo HTTP/2.0\r\n"
         "\r\n";
 
     int fd = make_pipe_with_input(req);
@@ -65,9 +65,9 @@ void test_invalid_version() {
     printf("test_invalid_version: OK\n");
 }
 
-void test_invalid_uri() {
+void test_invalid_uri(void) {
     const char *req =
-        "GET ../secret HTTP/1.1\r\n"
+        "GET /../secret HTTP/1.1\r\n"
         "\r\n";
 
     int fd = make_pipe_with_input(req);
@@ -80,9 +80,9 @@ void test_invalid_uri() {
     printf("test_invalid_uri: OK\n");
 }
 
-void test_put_missing_content_length() {
+void test_put_missing_content_length(void) {
     const char *req =
-        "PUT foo HTTP/1.1\r\n"
+        "PUT /foo HTTP/1.1\r\n"
         "\r\n";
 
     int fd = make_pipe_with_input(req);
@@ -95,9 +95,9 @@ void test_put_missing_content_length() {
     printf("test_put_missing_content_length: OK\n");
 }
 
-void test_put_with_body() {
+void test_put_with_body(void) {
     const char *req =
-        "PUT file HTTP/1.1\r\n"
+        "PUT /file HTTP/1.1\r\n"
         "Content-Length: 4\r\n"
         "\r\n"
         "DATA";
@@ -116,9 +116,9 @@ void test_put_with_body() {
     printf("test_put_with_body: OK\n");
 }
 
-void test_put_short_body() {
+void test_put_short_body(void) {
     const char *req =
-        "PUT file HTTP/1.1\r\n"
+        "PUT /file HTTP/1.1\r\n"
         "Content-Length: 10\r\n"
         "\r\n"
         "12345";
@@ -132,9 +132,9 @@ void test_put_short_body() {
     printf("test_put_short_body: OK\n");
 }
 
-void test_request_id_default() {
+void test_request_id_default(void) {
     const char *req =
-        "GET foo.txt HTTP/1.1\r\n"
+        "GET /foo.txt HTTP/1.1\r\n"
         "\r\n";
 
     int fd = make_pipe_with_input(req);
@@ -148,9 +148,9 @@ void test_request_id_default() {
     printf("test_request_id_default: OK\n");
 }
 
-void test_request_id_valid() {
+void test_request_id_valid(void) {
     const char *req =
-        "GET foo.txt HTTP/1.1\r\n"
+        "GET /foo.txt HTTP/1.1\r\n"
         "Request-ID: 42\r\n"
         "\r\n";
 
@@ -165,9 +165,9 @@ void test_request_id_valid() {
     printf("test_request_id_valid: OK\n");
 }
 
-void test_request_id_invalid() {
+void test_request_id_invalid(void) {
     const char *req =
-        "GET foo.txt HTTP/1.1\r\n"
+        "GET /foo.txt HTTP/1.1\r\n"
         "Request-ID: abc\r\n"
         "\r\n";
 
@@ -181,7 +181,7 @@ void test_request_id_invalid() {
     printf("test_request_id_invalid: OK\n");
 }
 
-int main() {
+int main(void) {
     test_valid_get();
     test_invalid_method();
     test_invalid_version();

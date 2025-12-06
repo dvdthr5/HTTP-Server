@@ -17,15 +17,10 @@ static int errno_to_status(int err) {
     if (err == EACCES || err == EPERM) {
         return 403;
     }
+    if (err == EISDIR) {
+        return 403;
+    }
     return 500;
-}
-
-static char *portable_strdup(const char *s) {
-    size_t len = strlen(s);
-    char *copy = malloc(len + 1);
-    if (!copy) return NULL;
-    memcpy(copy, s, len + 1);
-    return copy;
 }
 
 static char *build_path(const char *uri) {
@@ -34,7 +29,7 @@ static char *build_path(const char *uri) {
     }
 
     if (uri[0] == '/') {
-        return portable_strdup(uri);
+        uri += 1;
     }
 
     const char *tmp = getenv("TEST_TMPDIR");
@@ -97,6 +92,17 @@ int file_read_all(const char *path, char **out_buf, size_t *out_len) {
         return 500;
     }
 
+    struct stat st;
+    if (stat(full, &st) == -1) {
+        int status = errno_to_status(errno);
+        free(full);
+        return status;
+    }
+    if (S_ISDIR(st.st_mode)) {
+        free(full);
+        return 403;
+    }
+
     FILE *fp = fopen(full, "rb");
     if (!fp) {
         int status = errno_to_status(errno);
@@ -123,7 +129,7 @@ int file_read_all(const char *path, char **out_buf, size_t *out_len) {
         return 500;
     }
 
-    size_t size = (size_t)sz;
+    size_t size = (size_t) sz;
     size_t alloc_size = size == 0 ? 1 : size;
     char *buf = malloc(alloc_size);
     if (!buf) {
@@ -218,7 +224,7 @@ int file_get(const char *uri, uint8_t **data_out, size_t *size_out) {
         return status;
     }
 
-    *data_out = (uint8_t *)buf;
+    *data_out = (uint8_t *) buf;
     *size_out = len;
     return 200;
 }

@@ -11,17 +11,13 @@
 #include "parallel.h"
 #include "server.h"
 
-static void print_usage(const char *prog) {
-    fprintf(stderr, "Usage: %s [-p threads] <port> <data-dir>\n", prog);
-}
-
 static int parse_port(const char *value) {
     char *end = NULL;
     long port = strtol(value, &end, 10);
     if (end == value || *end != '\0' || port <= 0 || port > 65535) {
         return -1;
     }
-    return (int)port;
+    return (int) port;
 }
 
 int http_main(int argc, char **argv) {
@@ -31,17 +27,16 @@ int http_main(int argc, char **argv) {
 
     while ((opt = getopt(argc, argv, "p:")) != -1) {
         switch (opt) {
-            case 'p':
-                parallel_workers = atoi(optarg);
-                break;
-            default:
-                print_usage(argv[0]);
-                return EXIT_FAILURE;
+        case 'p': parallel_workers = atoi(optarg); break;
+        default:
+            fprintf(stderr, "Usage: %s [-p threads] <port> [data-dir]\n", argv[0]);
+            return EXIT_FAILURE;
         }
     }
 
-    if (argc - optind != 2) {
-        print_usage(argv[0]);
+    int remaining = argc - optind;
+    if (remaining != 1 && remaining != 2) {
+        fprintf(stderr, "Usage: %s [-p threads] <port> [data-dir]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -51,7 +46,7 @@ int http_main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
 
-    const char *data_dir = argv[optind + 1];
+    const char *data_dir = (remaining == 2) ? argv[optind + 1] : ".";
 
     if (log_init() != 0) {
         perror("log_init");
@@ -59,7 +54,7 @@ int http_main(int argc, char **argv) {
     }
 
     if (parallel_workers > 0) {
-        if (parallel_init((size_t)parallel_workers) != 0) {
+        if (parallel_init((size_t) parallel_workers) != 0) {
             perror("parallel_init");
             log_close();
             return EXIT_FAILURE;

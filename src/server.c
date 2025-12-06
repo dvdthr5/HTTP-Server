@@ -53,10 +53,10 @@ int run_server(int port, const char *data_dir) {
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons((uint16_t)port);
+    addr.sin_port = htons((uint16_t) port);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-    if (bind(server_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    if (bind(server_fd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
         close(server_fd);
         return -1;
     }

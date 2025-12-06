@@ -138,7 +138,7 @@ static void run_test_property1_body(void *arg) {
     int client_fd1 = fds1[1];
 
     const char *req1 =
-        "GET foo HTTP/1.1\r\n"
+        "GET /foo HTTP/1.1\r\n"
         "Request-ID: 1\r\n"
         "\r\n";
 
@@ -155,7 +155,7 @@ static void run_test_property1_body(void *arg) {
     int client_fd2 = fds2[1];
 
     const char *req2 =
-        "GET foo HTTP/1.1\r\n"
+        "GET /foo HTTP/1.1\r\n"
         "Request-ID: 2\r\n"
         "\r\n";
 
@@ -227,7 +227,7 @@ static void run_test_property2_body(void *arg) {
     int client_fd1 = fds1[1];
 
     const char *req1 =
-        "PUT file HTTP/1.1\r\n"
+        "PUT /file HTTP/1.1\r\n"
         "Content-Length: 4\r\n"
         "Request-ID: 10\r\n"
         "\r\n"
@@ -246,7 +246,7 @@ static void run_test_property2_body(void *arg) {
     int client_fd2 = fds2[1];
 
     const char *req2 =
-        "GET file HTTP/1.1\r\n"
+        "GET /file HTTP/1.1\r\n"
         "Request-ID: 11\r\n"
         "\r\n";
 
@@ -308,7 +308,7 @@ static void *client_thread_main(void *arg) {
 
     char req[256];
     snprintf(req, sizeof(req),
-             "GET ping%d HTTP/1.1\r\n"
+             "GET /ping%d HTTP/1.1\r\n"
              "Request-ID: %d\r\n"
              "\r\n",
              task->request_id,
